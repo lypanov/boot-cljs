@@ -35,7 +35,7 @@
         all-nses  (-> (fn [xs k v]
                         (reduce #(assoc %1 (str %2) (str k)) xs (:provides v)))
                       (reduce-kv {} (merge js-nses cljs-nses)))
-        fs-path   #(.getPath (file/relative-to (.getParentFile (io/file output-dir)) (io/file %)))]
+        fs-path   #(file/relative-to (.getParentFile (io/file output-dir)) (io/file %))]
     (map fs-path (-> (fn [xs k v]
                        (assoc xs k (set (keep (comp all-nses str) (:requires v)))))
                      (reduce-kv {} cljs-nses)

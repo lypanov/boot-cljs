@@ -73,7 +73,7 @@
   [dest-dir docroot & src-dirs]
   (doseq [d src-dirs]
     (doseq [in (->> d io/file file-seq (filter (memfn isFile)))]
-      (let [p (.getPath (file/relative-to d in))]
+      (let [p (file/relative-to d in)]
         (let [out (io/file dest-dir (rooted-file docroot p))]
           (when-not (and (.exists out) (= (.lastModified in) (.lastModified out)))
             (file/copy-with-lastmod in (io/file dest-dir (rooted-file docroot p)))))))))
