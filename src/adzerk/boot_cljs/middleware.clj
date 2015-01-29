@@ -38,7 +38,7 @@
   "Returns a JS expr that uses writeScript() to add a <script> tag to the
   document with the given src attribute and no body."
   [src]
-  (format "  writeScript(\"<script src='\" + prefix + \"%s'></script>\");\n" src))
+  (format "  writeScript(\"<script src='\" + prefix + \"%s'></script>\");\n" (-> src file/relative-file-to-uri str)))
 
 (defn- write-body
   "Returns a JS expr that uses writeScript() to add a <script> tag to the
@@ -155,7 +155,7 @@
           scripts     (-> (:incs files)
                           (->> (mapv rooted-path))
                           (conj (io/file output-dir "goog" "base.js"))
-                          (conj (util/get-name output-to)))]
+                          (conj (io/file (util/get-name output-to))))]
       (->> (write-body (file->goog main*))
            (format shim-js shim-name (apply str (map write-src scripts)))
            (spit shim-path))
