@@ -161,19 +161,23 @@
            (spit shim-path))
       (assoc-in ctx [:opts :output-to] output-to))))
 
-(defn- rel-path-to-foreign-lib-struct [output-dir path]
+(defn- rel-path-to-foreign-lib-struct [output-dir advanced path]
   (let [file (io/file path)
-        provides (-> file .getName (.replaceAll "\\.lib\\.js$" ""))]
-    { :file (str (.toURI (io/file output-dir)) "/" (file/relative-file-to-uri file)) :provides [ provides ]}))
+        provides (-> file .getName (.replaceAll "\\.lib\\.js$" ""))
+        dev-prefix (if advanced "" (str (.toURI (io/file output-dir)) "/"))
+        f (str dev-prefix (file/relative-file-to-uri file))]
+    { :file f
+      :provides [ provides ]}))
 
 (defn externs
   "Middleware to add externs files (i.e. files with the .ext.js extension) and
   Google Closure libs (i.e. files with the .lib.js extension) from the fileset
   to the CLJS compiler options."
   [{:keys [tmp-src tmp-out main files opts] :as ctx}]
-  (let [exts (map core/tmppath (:exts files))
+  (let [advanced (-> opts :optimizations (= :advanced))
+        exts (map (comp str file/relative-file-to-uri io/file core/tmppath) (:exts files))
         js-output-dir (.getParent (io/file (:output-dir opts)))
-        file->data (partial rel-path-to-foreign-lib-struct js-output-dir)
+        file->data (partial rel-path-to-foreign-lib-struct js-output-dir advanced)
         libs (map (comp file->data core/tmppath) (:libs files))]
     (update-in ctx [:opts] (partial merge-with (comp vec distinct into)) {:foreign-libs libs :externs exts})))
 
