@@ -67,13 +67,9 @@
 
 (defn- copy-to-docroot
   "Copies everything the application needs, relative to its js file."
-  [docroot {:keys [tmp-out tmp-result] {:keys [libs]} :files}]
-  (util/copy-docroot! tmp-result docroot tmp-out))
-
-(defn- copy-foreigns-to-docroot
-  "Copies everything the application needs, relative to its js file."
-  [docroot {:keys [tmp-out tmp-result] {:keys [libs]} :files}]
-  (doseq [[p f] (map (juxt core/tmppath core/tmpfile) libs)]
+  [docroot {:keys [tmp-out tmp-result] {:keys [incs]} :files}]
+  (util/copy-docroot! tmp-result docroot tmp-out)
+  (doseq [[p f] (map (juxt core/tmppath core/tmpfile) incs)]
     (file/copy-with-lastmod f (io/file tmp-result (util/rooted-file docroot p)))))
 
 (core/deftask ^:private default-main
@@ -135,7 +131,6 @@
               (if m
                 (let [docroot   (.getParent (io/file (core/tmppath m)))
                       ctx       (prep-compile (prep-context m fs docroot ctx))
-                      _ (copy-foreigns-to-docroot docroot ctx)
                       dep-order (->> (compile ctx @pod)
                                      (map #(.getPath (util/rooted-file docroot %)))
                                      (concat dep-order))]

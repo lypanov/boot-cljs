@@ -161,10 +161,11 @@
            (spit shim-path))
       (assoc-in ctx [:opts :output-to] output-to))))
 
-(defn- rel-path-to-foreign-lib-struct [output-dir path]
-  (let [file (io/file path)
+(defn- rel-path-to-foreign-lib-struct [rel-path]
+  (let [file (io/file rel-path)
+        uri (file/relative-file-to-uri file)
         provides (-> file .getName (.replaceAll "\\.lib\\.js$" ""))]
-    { :file (str (.toURI (io/file output-dir)) "/" (file/relative-file-to-uri file)) :provides [ provides ]}))
+    { :file (str uri) :provides [ provides ]}))
 
 (defn externs
   "Middleware to add externs files (i.e. files with the .ext.js extension) and
@@ -172,9 +173,7 @@
   to the CLJS compiler options."
   [{:keys [tmp-src tmp-out main files opts] :as ctx}]
   (let [exts (map core/tmppath (:exts files))
-        js-output-dir (.getParent (io/file (:output-dir opts)))
-        file->data (partial rel-path-to-foreign-lib-struct js-output-dir)
-        libs (map (comp file->data core/tmppath) (:libs files))]
+        libs (map (comp rel-path-to-foreign-lib-struct core/tmppath) (:libs files))]
     (update-in ctx [:opts] (partial merge-with (comp vec distinct into)) {:foreign-libs libs :externs exts})))
 
 (defn source-map
