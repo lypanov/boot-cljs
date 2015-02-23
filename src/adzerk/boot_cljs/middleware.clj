@@ -161,20 +161,14 @@
            (spit shim-path))
       (assoc-in ctx [:opts :output-to] output-to))))
 
-(defn- rel-path-to-foreign-lib-struct [rel-path]
-  (let [file (io/file rel-path)
-        uri (file/relative-file-to-uri file)
-        provides (-> file .getName (.replaceAll "\\.lib\\.js$" ""))]
-    { :file (str uri) :provides [ provides ]}))
-
 (defn externs
   "Middleware to add externs files (i.e. files with the .ext.js extension) and
   Google Closure libs (i.e. files with the .lib.js extension) from the fileset
   to the CLJS compiler options."
   [{:keys [tmp-src tmp-out main files opts] :as ctx}]
   (let [exts (map core/tmppath (:exts files))
-        libs (map (comp rel-path-to-foreign-lib-struct core/tmppath) (:libs files))]
-    (update-in ctx [:opts] (partial merge-with (comp vec distinct into)) {:foreign-libs libs :externs exts})))
+        libs (map core/tmppath (:libs files))]
+    (update-in ctx [:opts] (partial merge-with (comp vec distinct into)) {:libs libs :externs exts})))
 
 (defn source-map
   "Middleware to configure source map related CLJS compiler options."
